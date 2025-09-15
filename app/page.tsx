@@ -210,6 +210,15 @@ export default function App() {
   // Start/stop metronome
   useEffect(() => {
     if (isPlaying) {
+      // Play the first beat immediately when starting
+      if (soundEnabled) {
+        const currentStrum = currentPattern.pattern[currentBeat];
+        const shouldPlaySound = currentStrum !== "rest" || restSoundEnabled;
+        if (shouldPlaySound) {
+          playBeat(isAccentBeat(currentBeat));
+        }
+      }
+
       intervalRef.current = setInterval(() => {
         setCurrentBeat((prev) => {
           const nextBeat = (prev + 1) % currentPattern.pattern.length;
@@ -236,7 +245,7 @@ export default function App() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, getBeatInterval, currentPattern.pattern.length, soundEnabled, restSoundEnabled, accentEnabled, playBeat, isAccentBeat, currentPattern.pattern]);
+  }, [isPlaying, getBeatInterval, currentPattern.pattern.length, soundEnabled, restSoundEnabled, accentEnabled, playBeat, isAccentBeat, currentPattern.pattern, currentBeat]);
 
   const handlePlayStop = () => {
     if (isPlaying) {

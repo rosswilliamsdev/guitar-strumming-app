@@ -229,7 +229,9 @@ export function PatternEditor({ onSavePattern }: PatternEditorProps) {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <span className="text-xs text-center text-muted-foreground">
+                <span className={`text-xs text-center text-muted-foreground ${
+                  (index + 1).toString().match(/^[1-4]$/) ? "font-bold text-sm" : ""
+                }`}>
                   {index + 1}
                 </span>
               </div>
