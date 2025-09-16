@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronUp, Minus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Minus, X, RotateCcw } from "lucide-react";
+import { Button } from "./ui/button";
 
 export type StrumType = "down" | "up" | "rest" | "muted";
 export type Subdivision = "quarter" | "eighth" | "sixteenth";
@@ -17,14 +18,41 @@ interface StrummingDisplayProps {
   patternData: StrummingPattern;
   currentBeat: number;
   isPlaying: boolean;
+  onReset: () => void;
+  onSubdivisionChange: (subdivision: Subdivision) => void;
+  onPatternChange: (newPattern: StrumType[]) => void;
 }
 
 export function StrummingDisplay({
   patternData,
   currentBeat,
   isPlaying,
+  onReset,
+  onSubdivisionChange,
+  onPatternChange,
 }: StrummingDisplayProps) {
   const { pattern, subdivision, beatsPerMeasure = 4 } = patternData;
+
+  const cycleStrumType = (currentType: StrumType): StrumType => {
+    switch (currentType) {
+      case "down":
+        return "up";
+      case "up":
+        return "muted";
+      case "muted":
+        return "rest";
+      case "rest":
+        return "down";
+      default:
+        return "down";
+    }
+  };
+
+  const handleBeatClick = (beatIndex: number) => {
+    const newPattern = [...pattern];
+    newPattern[beatIndex] = cycleStrumType(pattern[beatIndex]);
+    onPatternChange(newPattern);
+  };
 
   const getBeatLabel = (index: number) => {
     const beatsPerBar = beatsPerMeasure;
@@ -95,17 +123,74 @@ export function StrummingDisplay({
 
   return (
     <div className="bg-card border rounded-lg p-6">
-      <h3 className="mb-4">Strumming Pattern</h3>
-      <div className="space-y-4">
-        <div className="text-center">
+      {/* Legend */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <ChevronDown className="w-3 h-3" />
+            <span>Down</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <ChevronUp className="w-3 h-3" />
+            <span>Up</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <X className="w-3 h-3" />
+            <span>Muted</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Minus className="w-3 h-3" />
+            <span>Rest</span>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onReset}
+          className="h-8 w-8 p-0"
+          title="Reset to Quarter Notes"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+      </div>
+      <div>
+        <div className="text-center space-y-3">
           <div className="inline-block px-3 py-1 bg-secondary rounded-full text-sm">
             {subdivision === "quarter" && "Quarter Notes"}
             {subdivision === "eighth" && "Eighth Notes"}
             {subdivision === "sixteenth" && "Sixteenth Notes"}
           </div>
+
+          {/* Subdivision buttons */}
+          <div className="flex justify-center gap-2">
+            <Button
+              variant={subdivision === "quarter" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onSubdivisionChange("quarter")}
+              className="w-8 h-8 p-0"
+            >
+              4
+            </Button>
+            <Button
+              variant={subdivision === "eighth" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onSubdivisionChange("eighth")}
+              className="w-8 h-8 p-0"
+            >
+              8
+            </Button>
+            <Button
+              variant={subdivision === "sixteenth" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onSubdivisionChange("sixteenth")}
+              className="w-8 h-8 p-0"
+            >
+              16
+            </Button>
+          </div>
         </div>
 
-{subdivision === "sixteenth" ? (
+        {subdivision === "sixteenth" ? (
           // Two-row layout for 16th note patterns
           <div className="space-y-4">
             {/* Row 1: Beats 1 and 2 */}
@@ -117,19 +202,22 @@ export function StrummingDisplay({
                     {getHandMotionChevron(strum, index)}
                   </div>
                   <div
-                    className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 ${
+                    className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
                       isPlaying && index === currentBeat
                         ? "border-primary bg-primary/10"
                         : "border-border"
                     }`}
+                    onClick={() => handleBeatClick(index)}
                   >
                     {getStrumIcon(strum, index)}
                   </div>
-                  <span className={`${
-                    getBeatLabel(index).match(/^[1-4]$/)
-                      ? "text-lg font-bold text-primary"
-                      : "text-xs text-muted-foreground"
-                  } font-mono min-w-[20px] text-center`}>
+                  <span
+                    className={`${
+                      getBeatLabel(index).match(/^[1-4]$/)
+                        ? "text-lg font-bold text-primary"
+                        : "text-xs text-muted-foreground"
+                    } font-mono min-w-[20px] text-center`}
+                  >
                     {getBeatLabel(index)}
                   </span>
                 </div>
@@ -140,25 +228,31 @@ export function StrummingDisplay({
               {pattern.slice(8, 16).map((strum, index) => {
                 const actualIndex = index + 8;
                 return (
-                  <div key={actualIndex} className="flex flex-col items-center gap-2">
+                  <div
+                    key={actualIndex}
+                    className="flex flex-col items-center gap-2"
+                  >
                     {/* Hand motion chevron above circle for rest and muted */}
                     <div className="h-4 flex items-center justify-center">
                       {getHandMotionChevron(strum, actualIndex)}
                     </div>
                     <div
-                      className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 ${
+                      className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
                         isPlaying && actualIndex === currentBeat
                           ? "border-primary bg-primary/10"
                           : "border-border"
                       }`}
+                      onClick={() => handleBeatClick(actualIndex)}
                     >
                       {getStrumIcon(strum, actualIndex)}
                     </div>
-                    <span className={`${
-                      getBeatLabel(actualIndex).match(/^[1-4]$/)
-                        ? "text-lg font-bold text-primary"
-                        : "text-xs text-muted-foreground"
-                    } font-mono min-w-[20px] text-center`}>
+                    <span
+                      className={`${
+                        getBeatLabel(actualIndex).match(/^[1-4]$/)
+                          ? "text-lg font-bold text-primary"
+                          : "text-xs text-muted-foreground"
+                      } font-mono min-w-[20px] text-center`}
+                    >
                       {getBeatLabel(actualIndex)}
                     </span>
                   </div>
@@ -176,19 +270,22 @@ export function StrummingDisplay({
                   {getHandMotionChevron(strum, index)}
                 </div>
                 <div
-                  className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 ${
+                  className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
                     isPlaying && index === currentBeat
                       ? "border-primary bg-primary/10"
                       : "border-border"
                   }`}
+                  onClick={() => handleBeatClick(index)}
                 >
                   {getStrumIcon(strum, index)}
                 </div>
-                <span className={`${
-                  getBeatLabel(index).match(/^[1-4]$/)
-                    ? "text-lg font-bold text-primary"
-                    : "text-xs text-muted-foreground"
-                } font-mono min-w-[20px] text-center`}>
+                <span
+                  className={`${
+                    getBeatLabel(index).match(/^[1-4]$/)
+                      ? "text-lg font-bold text-primary"
+                      : "text-xs text-muted-foreground"
+                  } font-mono min-w-[20px] text-center`}
+                >
                   {getBeatLabel(index)}
                 </span>
               </div>

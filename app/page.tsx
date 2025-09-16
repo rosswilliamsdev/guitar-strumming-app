@@ -5,172 +5,42 @@ import {
   StrummingDisplay,
   StrummingPattern,
 } from "../components/StrummingDisplay";
-import { PatternLibrary } from "../components/PatternLibrary";
 import { TempoControl } from "../components/TempoControl";
-import { PatternEditor } from "../components/PatternEditor";
 import { MetronomeDisplay } from "../components/MetronomeDisplay";
 import { MetronomeControls } from "../components/MetronomeControls";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { useMetronomeSound } from "../hooks/useMetronomeSound";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../components/ui/tabs";
-import { toast } from "sonner";
+import { Switch } from "../components/ui/switch";
+import { Label } from "../components/ui/label";
+import { Slider } from "../components/ui/slider";
 
-// Default strumming patterns
-const defaultPatterns: StrummingPattern[] = [
-  {
-    id: "basic-down",
-    name: "Basic Down Strums",
-    description: "Simple downward strums on every beat",
-    pattern: ["down", "down", "down", "down"],
-    subdivision: "quarter",
-    beatsPerMeasure: 4,
-    genre: "Beginner",
-  },
-  {
-    id: "down-up-eighth",
-    name: "Down-Up Eighths",
-    description: "Alternating down and up strums on eighth notes",
-    pattern: ["down", "up", "down", "up", "down", "up", "down", "up"],
-    subdivision: "eighth",
-    beatsPerMeasure: 4,
-    genre: "Beginner",
-  },
-  {
-    id: "folk-strum",
-    name: "Folk Strum",
-    description: "Classic folk pattern: D-D-U-D-U-D-U-D",
-    pattern: ["down", "rest", "up", "down", "up", "down", "up", "rest"],
-    subdivision: "eighth",
-    beatsPerMeasure: 4,
-    genre: "Folk",
-  },
-  {
-    id: "common-time",
-    name: "Common Time",
-    description: "Popular pop strumming pattern: D-rest-D-U-rest-U-D-U",
-    pattern: ["down", "rest", "down", "up", "rest", "up", "down", "up"],
-    subdivision: "eighth",
-    beatsPerMeasure: 4,
-    genre: "Pop",
-  },
-  {
-    id: "rock-rhythm",
-    name: "Rock Rhythm",
-    description: "Rock pattern with muted strums",
-    pattern: ["down", "muted", "down", "up", "down", "up", "down", "up"],
-    subdivision: "eighth",
-    beatsPerMeasure: 4,
-    genre: "Rock",
-  },
-  {
-    id: "country-shuffle",
-    name: "Country Shuffle",
-    description: "Country pattern with muted strums and swing feel in 3/4 time",
-    pattern: ["down", "muted", "up", "down", "muted", "up"],
-    subdivision: "eighth",
-    beatsPerMeasure: 3,
-    genre: "Country",
-  },
-  {
-    id: "waltz",
-    name: "3/4 Waltz",
-    description: "Traditional waltz in 3/4 time",
-    pattern: ["down", "down", "down"],
-    subdivision: "quarter",
-    beatsPerMeasure: 3,
-    genre: "Folk",
-  },
-  {
-    id: "reggae-skank",
-    name: "Reggae Skank",
-    description: "Classic reggae upstroke on off-beats",
-    pattern: ["rest", "up", "rest", "up", "rest", "up", "rest", "up"],
-    subdivision: "eighth",
-    beatsPerMeasure: 4,
-    genre: "Reggae",
-  },
-  {
-    id: "sixteenth-groove",
-    name: "Sixteenth Note Groove",
-    description: "Funky sixteenth note pattern with muted strums",
-    pattern: [
-      "down",
-      "up",
-      "down",
-      "up",
-      "muted",
-      "up",
-      "down",
-      "up",
-      "down",
-      "up",
-      "down",
-      "up",
-      "muted",
-      "up",
-      "down",
-      "up",
-    ],
-    subdivision: "sixteenth",
-    beatsPerMeasure: 4,
-    genre: "Funk",
-  },
-  {
-    id: "ballad-pattern",
-    name: "Ballad Pattern",
-    description: "Gentle ballad strumming",
-    pattern: ["down", "rest", "rest", "up", "rest", "up", "rest", "up"],
-    subdivision: "eighth",
-    beatsPerMeasure: 4,
-    genre: "Ballad",
-  },
-  {
-    id: "palm-mute-rock",
-    name: "Palm Mute Rock",
-    description: "Heavy rock pattern with palm muted strums",
-    pattern: ["down", "muted", "muted", "up", "muted", "muted", "down", "up"],
-    subdivision: "eighth",
-    beatsPerMeasure: 4,
-    genre: "Rock",
-  },
-];
+// Default quarter note pattern
+const defaultQuarterPattern: StrummingPattern = {
+  id: "quarter-notes",
+  name: "Quarter Notes",
+  description: "Simple quarter note pattern",
+  pattern: ["down", "down", "down", "down"],
+  subdivision: "quarter",
+  beatsPerMeasure: 4,
+};
+
 
 export default function App() {
-  const [patterns, setPatterns] = useState<StrummingPattern[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("strumming-patterns");
-      return saved ? [...defaultPatterns, ...JSON.parse(saved)] : defaultPatterns;
-    }
-    return defaultPatterns;
-  });
 
   const [currentPattern, setCurrentPattern] = useState<StrummingPattern>(
-    patterns[0]
+    defaultQuarterPattern
   );
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [restSoundEnabled, setRestSoundEnabled] = useState(true);
   const [accentEnabled, setAccentEnabled] = useState(true);
+  const [randomMutingEnabled, setRandomMutingEnabled] = useState(false);
+  const [randomMutingPercentage, setRandomMutingPercentage] = useState(30);
   const [volume, setVolume] = useState(0.5);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { playBeat, setVolume: setMetronomeVolume } = useMetronomeSound();
 
-  // Save custom patterns to localStorage
-  const saveCustomPatterns = (allPatterns: StrummingPattern[]) => {
-    if (typeof window !== "undefined") {
-      const customPatterns = allPatterns.filter(
-        (p) => !defaultPatterns.find((dp) => dp.id === p.id)
-      );
-      localStorage.setItem("strumming-patterns", JSON.stringify(customPatterns));
-    }
-  };
 
   // Calculate interval based on BPM and subdivision
   const getBeatInterval = useCallback(() => {
@@ -189,45 +59,82 @@ export default function App() {
   }, [bpm, currentPattern.subdivision]);
 
   // Determine if current beat is an accent (strong beat)
-  const isAccentBeat = useCallback((beatIndex: number) => {
-    if (!accentEnabled) return false;
+  const isAccentBeat = useCallback(
+    (beatIndex: number) => {
+      if (!accentEnabled) return false;
 
-    // For quarter notes, accent on beat 1
-    if (currentPattern.subdivision === "quarter") {
+      // For quarter notes, accent on beat 1
+      if (currentPattern.subdivision === "quarter") {
+        return beatIndex === 0;
+      }
+      // For eighth notes, accent on beats 1, 3, 5, 7 (downbeats) - only beat 1 of each measure
+      if (currentPattern.subdivision === "eighth") {
+        return (
+          beatIndex % 2 === 0 &&
+          beatIndex % ((currentPattern.beatsPerMeasure || 4) * 2) === 0
+        );
+      }
+      // For sixteenth notes, accent on beats 1, 5, 9, 13 (downbeats) - only beat 1 of each measure
+      if (currentPattern.subdivision === "sixteenth") {
+        return (
+          beatIndex % 4 === 0 &&
+          beatIndex % ((currentPattern.beatsPerMeasure || 4) * 4) === 0
+        );
+      }
       return beatIndex === 0;
-    }
-    // For eighth notes, accent on beats 1, 3, 5, 7 (downbeats) - only beat 1 of each measure
-    if (currentPattern.subdivision === "eighth") {
-      return beatIndex % 2 === 0 && beatIndex % ((currentPattern.beatsPerMeasure || 4) * 2) === 0;
-    }
-    // For sixteenth notes, accent on beats 1, 5, 9, 13 (downbeats) - only beat 1 of each measure
-    if (currentPattern.subdivision === "sixteenth") {
-      return beatIndex % 4 === 0 && beatIndex % ((currentPattern.beatsPerMeasure || 4) * 4) === 0;
-    }
-    return beatIndex === 0;
-  }, [currentPattern.subdivision, currentPattern.beatsPerMeasure, accentEnabled]);
+    },
+    [currentPattern.subdivision, currentPattern.beatsPerMeasure, accentEnabled]
+  );
 
   // Start/stop metronome
   useEffect(() => {
     if (isPlaying) {
       // Play the first beat immediately when starting
-      if (soundEnabled) {
-        const currentStrum = currentPattern.pattern[currentBeat];
+      const currentStrum = currentPattern.pattern[currentBeat];
+
+      // Check if random muting should apply to any beat (check first)
+      const shouldRandomMute =
+        randomMutingEnabled && Math.random() * 100 < randomMutingPercentage;
+
+      if (shouldRandomMute) {
+        // Don't play any sound when randomly muted
+      } else {
+        // Normal logic for non-randomly-muted beats
         const shouldPlaySound = currentStrum !== "rest" || restSoundEnabled;
         if (shouldPlaySound) {
-          playBeat(isAccentBeat(currentBeat));
+          if (currentStrum === "muted") {
+            playBeat("muted");
+          } else if (currentStrum === "rest") {
+            playBeat("normal"); // Play normal sound for rest when restSoundEnabled is true
+          } else {
+            playBeat(isAccentBeat(currentBeat) ? "accent" : "normal");
+          }
         }
       }
 
       intervalRef.current = setInterval(() => {
         setCurrentBeat((prev) => {
           const nextBeat = (prev + 1) % currentPattern.pattern.length;
-          // Play sound if enabled
-          if (soundEnabled) {
-            const currentStrum = currentPattern.pattern[nextBeat];
+          // Play sound
+          const currentStrum = currentPattern.pattern[nextBeat];
+
+          // Check if random muting should apply to any beat (check first)
+          const shouldRandomMute =
+            randomMutingEnabled && Math.random() * 100 < randomMutingPercentage;
+
+          if (shouldRandomMute) {
+            // Don't play any sound when randomly muted
+          } else {
+            // Normal logic for non-randomly-muted beats
             const shouldPlaySound = currentStrum !== "rest" || restSoundEnabled;
             if (shouldPlaySound) {
-              playBeat(isAccentBeat(nextBeat));
+              if (currentStrum === "muted") {
+                playBeat("muted");
+              } else if (currentStrum === "rest") {
+                playBeat("normal"); // Play normal sound for rest when restSoundEnabled is true
+              } else {
+                playBeat(isAccentBeat(nextBeat) ? "accent" : "normal");
+              }
             }
           }
           return nextBeat;
@@ -245,7 +152,18 @@ export default function App() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, getBeatInterval, currentPattern.pattern.length, soundEnabled, restSoundEnabled, accentEnabled, playBeat, isAccentBeat, currentPattern.pattern, currentBeat]);
+  }, [
+    isPlaying,
+    getBeatInterval,
+    currentPattern.pattern.length,
+    restSoundEnabled,
+    accentEnabled,
+    randomMutingEnabled,
+    randomMutingPercentage,
+    playBeat,
+    isAccentBeat,
+    currentPattern.pattern,
+  ]);
 
   const handlePlayStop = () => {
     if (isPlaying) {
@@ -263,20 +181,87 @@ export default function App() {
     setMetronomeVolume(newVolume);
   };
 
-  const handlePatternSelect = (pattern: StrummingPattern) => {
-    setCurrentPattern(pattern);
+
+  const handleReset = () => {
+    setCurrentPattern(defaultQuarterPattern);
     setCurrentBeat(0);
     setIsPlaying(false);
   };
 
-  const handleSavePattern = (pattern: StrummingPattern) => {
-    const newPatterns = [...patterns, pattern];
-    setPatterns(newPatterns);
-    saveCustomPatterns(newPatterns);
-    setCurrentPattern(pattern);
+  const handleSubdivisionChange = (
+    subdivision: "quarter" | "eighth" | "sixteenth"
+  ) => {
+    let newPattern: StrummingPattern;
+
+    switch (subdivision) {
+      case "quarter":
+        newPattern = {
+          id: "quarter-notes",
+          name: "Quarter Notes",
+          description: "Simple quarter note pattern",
+          pattern: ["down", "down", "down", "down"],
+          subdivision: "quarter",
+          beatsPerMeasure: 4,
+        };
+        break;
+      case "eighth":
+        newPattern = {
+          id: "eighth-notes",
+          name: "Eighth Notes",
+          description: "Alternating down-up eighth note pattern",
+          pattern: ["down", "up", "down", "up", "down", "up", "down", "up"],
+          subdivision: "eighth",
+          beatsPerMeasure: 4,
+        };
+        break;
+      case "sixteenth":
+        newPattern = {
+          id: "sixteenth-notes",
+          name: "Sixteenth Notes",
+          description: "Alternating down-up sixteenth note pattern",
+          pattern: [
+            "down",
+            "up",
+            "down",
+            "up",
+            "down",
+            "up",
+            "down",
+            "up",
+            "down",
+            "up",
+            "down",
+            "up",
+            "down",
+            "up",
+            "down",
+            "up",
+          ],
+          subdivision: "sixteenth",
+          beatsPerMeasure: 4,
+        };
+        break;
+      default:
+        newPattern = defaultQuarterPattern;
+    }
+
+    setCurrentPattern(newPattern);
     setCurrentBeat(0);
     setIsPlaying(false);
-    toast.success(`Pattern "${pattern.name}" saved successfully!`);
+  };
+
+  const handlePatternChange = (
+    newPatternArray: ("down" | "up" | "rest" | "muted")[]
+  ) => {
+    const updatedPattern: StrummingPattern = {
+      ...currentPattern,
+      pattern: newPatternArray,
+      name: "Custom Pattern",
+      description: "Modified pattern",
+    };
+    setCurrentPattern(updatedPattern);
+    setCurrentBeat(0);
+    setIsPlaying(false);
   };
 
   return (
@@ -305,6 +290,9 @@ export default function App() {
               patternData={currentPattern}
               currentBeat={currentBeat}
               isPlaying={isPlaying}
+              onReset={handleReset}
+              onSubdivisionChange={handleSubdivisionChange}
+              onPatternChange={handlePatternChange}
             />
           </div>
 
@@ -333,61 +321,54 @@ export default function App() {
           <MetronomeControls
             volume={volume}
             onVolumeChange={handleVolumeChange}
-            soundEnabled={soundEnabled}
-            onSoundEnabledChange={setSoundEnabled}
             restSoundEnabled={restSoundEnabled}
             onRestSoundEnabledChange={setRestSoundEnabled}
             accentEnabled={accentEnabled}
             onAccentEnabledChange={setAccentEnabled}
           />
 
-          {/* Pattern Info */}
+          {/* Random Muting Feature */}
           <div className="bg-card border rounded-lg p-6">
-            <h3 className="mb-2">Current Pattern</h3>
-            <h4 className="mb-1">{currentPattern.name}</h4>
-            <p className="text-sm text-muted-foreground mb-2">
-              {currentPattern.description}
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              {currentPattern.genre && (
-                <div className="inline-block px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                  {currentPattern.genre}
+            <div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="font-medium">Enable Random Muting</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Randomly mute notes during playback
+                  </p>
                 </div>
-              )}
-              <div className="inline-block px-2 py-1 bg-secondary/50 text-secondary-foreground rounded text-xs">
-                {currentPattern.subdivision === "quarter" && "Quarter Notes"}
-                {currentPattern.subdivision === "eighth" && "Eighth Notes"}
-                {currentPattern.subdivision === "sixteenth" &&
-                  "Sixteenth Notes"}
+                <Switch
+                  checked={randomMutingEnabled}
+                  onCheckedChange={setRandomMutingEnabled}
+                />
               </div>
-              {currentPattern.beatsPerMeasure !== 4 && (
-                <div className="inline-block px-2 py-1 bg-accent/50 text-accent-foreground rounded text-xs">
-                  {currentPattern.beatsPerMeasure}/4 time
+
+              <div className="space-y-2 mt-7.75">
+                <div className="flex items-center justify-between space-y-2">
+                  <Label className="font-medium">Muting Chance</Label>
+                  <span className="text-sm text-muted-foreground">
+                    {randomMutingPercentage}%
+                  </span>
                 </div>
-              )}
+                <Slider
+                  value={[randomMutingPercentage]}
+                  onValueChange={(values) =>
+                    setRandomMutingPercentage(values[0])
+                  }
+                  min={5}
+                  max={80}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>5%</span>
+                  <span>80%</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs for Pattern Library and Editor */}
-        <Tabs defaultValue="library" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="library">Pattern Library</TabsTrigger>
-            <TabsTrigger value="editor">Create Pattern</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="library" className="space-y-4">
-            <PatternLibrary
-              patterns={patterns}
-              currentPattern={currentPattern}
-              onPatternSelect={handlePatternSelect}
-            />
-          </TabsContent>
-
-          <TabsContent value="editor" className="space-y-4">
-            <PatternEditor onSavePattern={handleSavePattern} />
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   );

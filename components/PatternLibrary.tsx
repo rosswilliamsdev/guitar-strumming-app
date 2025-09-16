@@ -13,7 +13,12 @@ export function PatternLibrary({
   currentPattern,
   onPatternSelect,
 }: PatternLibraryProps) {
-  const groupedPatterns = patterns.reduce((acc, pattern) => {
+  // Filter out beginner patterns
+  const filteredPatterns = patterns.filter(
+    (pattern) => pattern.genre !== "Beginner"
+  );
+
+  const groupedPatterns = filteredPatterns.reduce((acc, pattern) => {
     const genre = pattern.genre || "General";
     if (!acc[genre]) acc[genre] = [];
     acc[genre].push(pattern);
