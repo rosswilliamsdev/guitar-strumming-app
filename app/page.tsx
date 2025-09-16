@@ -296,8 +296,8 @@ export default function App() {
             />
           </div>
 
-          {/* Metronome */}
-          <div>
+          {/* Metronome - Hidden on mobile */}
+          <div className="hidden sm:block">
             <MetronomeDisplay
               currentBeat={currentBeat}
               patternData={currentPattern}

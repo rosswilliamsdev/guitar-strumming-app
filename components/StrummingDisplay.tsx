@@ -191,11 +191,11 @@ export function StrummingDisplay({
         </div>
 
         {subdivision === "sixteenth" ? (
-          // Two-row layout for 16th note patterns
-          <div className="space-y-4">
-            {/* Row 1: Beats 1 and 2 */}
+          // Mobile: Each beat on its own row (4 subdivisions per row)
+          <div className="space-y-4 sm:space-y-4">
+            {/* Beat 1 */}
             <div className="flex items-center justify-center gap-3">
-              {pattern.slice(0, 8).map((strum, index) => (
+              {pattern.slice(0, 4).map((strum, index) => (
                 <div key={index} className="flex flex-col items-center gap-2">
                   {/* Hand motion chevron above circle for rest and muted */}
                   <div className="h-4 flex items-center justify-center">
@@ -223,9 +223,45 @@ export function StrummingDisplay({
                 </div>
               ))}
             </div>
-            {/* Row 2: Beats 3 and 4 */}
+            {/* Beat 2 */}
             <div className="flex items-center justify-center gap-3">
-              {pattern.slice(8, 16).map((strum, index) => {
+              {pattern.slice(4, 8).map((strum, index) => {
+                const actualIndex = index + 4;
+                return (
+                  <div
+                    key={actualIndex}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    {/* Hand motion chevron above circle for rest and muted */}
+                    <div className="h-4 flex items-center justify-center">
+                      {getHandMotionChevron(strum, actualIndex)}
+                    </div>
+                    <div
+                      className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
+                        isPlaying && actualIndex === currentBeat
+                          ? "border-primary bg-primary/10"
+                          : "border-border"
+                      }`}
+                      onClick={() => handleBeatClick(actualIndex)}
+                    >
+                      {getStrumIcon(strum, actualIndex)}
+                    </div>
+                    <span
+                      className={`${
+                        getBeatLabel(actualIndex).match(/^[1-4]$/)
+                          ? "text-lg font-bold text-primary"
+                          : "text-xs text-muted-foreground"
+                      } font-mono min-w-[20px] text-center`}
+                    >
+                      {getBeatLabel(actualIndex)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Beat 3 */}
+            <div className="flex items-center justify-center gap-3">
+              {pattern.slice(8, 12).map((strum, index) => {
                 const actualIndex = index + 8;
                 return (
                   <div
@@ -259,9 +295,148 @@ export function StrummingDisplay({
                 );
               })}
             </div>
+            {/* Beat 4 */}
+            <div className="flex items-center justify-center gap-3">
+              {pattern.slice(12, 16).map((strum, index) => {
+                const actualIndex = index + 12;
+                return (
+                  <div
+                    key={actualIndex}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    {/* Hand motion chevron above circle for rest and muted */}
+                    <div className="h-4 flex items-center justify-center">
+                      {getHandMotionChevron(strum, actualIndex)}
+                    </div>
+                    <div
+                      className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
+                        isPlaying && actualIndex === currentBeat
+                          ? "border-primary bg-primary/10"
+                          : "border-border"
+                      }`}
+                      onClick={() => handleBeatClick(actualIndex)}
+                    >
+                      {getStrumIcon(strum, actualIndex)}
+                    </div>
+                    <span
+                      className={`${
+                        getBeatLabel(actualIndex).match(/^[1-4]$/)
+                          ? "text-lg font-bold text-primary"
+                          : "text-xs text-muted-foreground"
+                      } font-mono min-w-[20px] text-center`}
+                    >
+                      {getBeatLabel(actualIndex)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : subdivision === "eighth" ? (
+          // Eighth notes: beats 1-2 on first row, 3-4 on second row (mobile)
+          <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-center sm:gap-3 sm:flex-wrap">
+            <div className="sm:hidden">
+              {/* Mobile: Two rows */}
+              {/* Row 1: Beats 1 and 2 */}
+              <div className="flex items-center justify-center gap-3 mb-4">
+                {pattern.slice(0, 4).map((strum, index) => (
+                  <div key={index} className="flex flex-col items-center gap-2">
+                    {/* Hand motion chevron above circle for rest and muted */}
+                    <div className="h-4 flex items-center justify-center">
+                      {getHandMotionChevron(strum, index)}
+                    </div>
+                    <div
+                      className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
+                        isPlaying && index === currentBeat
+                          ? "border-primary bg-primary/10"
+                          : "border-border"
+                      }`}
+                      onClick={() => handleBeatClick(index)}
+                    >
+                      {getStrumIcon(strum, index)}
+                    </div>
+                    <span
+                      className={`${
+                        getBeatLabel(index).match(/^[1-4]$/)
+                          ? "text-lg font-bold text-primary"
+                          : "text-xs text-muted-foreground"
+                      } font-mono min-w-[20px] text-center`}
+                    >
+                      {getBeatLabel(index)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Row 2: Beats 3 and 4 */}
+              <div className="flex items-center justify-center gap-3">
+                {pattern.slice(4, 8).map((strum, index) => {
+                  const actualIndex = index + 4;
+                  return (
+                    <div
+                      key={actualIndex}
+                      className="flex flex-col items-center gap-2"
+                    >
+                      {/* Hand motion chevron above circle for rest and muted */}
+                      <div className="h-4 flex items-center justify-center">
+                        {getHandMotionChevron(strum, actualIndex)}
+                      </div>
+                      <div
+                        className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
+                          isPlaying && actualIndex === currentBeat
+                            ? "border-primary bg-primary/10"
+                            : "border-border"
+                        }`}
+                        onClick={() => handleBeatClick(actualIndex)}
+                      >
+                        {getStrumIcon(strum, actualIndex)}
+                      </div>
+                      <span
+                        className={`${
+                          getBeatLabel(actualIndex).match(/^[1-4]$/)
+                            ? "text-lg font-bold text-primary"
+                            : "text-xs text-muted-foreground"
+                        } font-mono min-w-[20px] text-center`}
+                      >
+                        {getBeatLabel(actualIndex)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Desktop: Single row */}
+            <div className="hidden sm:flex sm:items-center sm:justify-center sm:gap-3">
+              {pattern.map((strum, index) => (
+                <div key={index} className="flex flex-col items-center gap-2">
+                  {/* Hand motion chevron above circle for rest and muted */}
+                  <div className="h-4 flex items-center justify-center">
+                    {getHandMotionChevron(strum, index)}
+                  </div>
+                  <div
+                    className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all duration-100 cursor-pointer hover:bg-accent/50 ${
+                      isPlaying && index === currentBeat
+                        ? "border-primary bg-primary/10"
+                        : "border-border"
+                    }`}
+                    onClick={() => handleBeatClick(index)}
+                  >
+                    {getStrumIcon(strum, index)}
+                  </div>
+                  <span
+                    className={`${
+                      getBeatLabel(index).match(/^[1-4]$/)
+                        ? "text-lg font-bold text-primary"
+                        : "text-xs text-muted-foreground"
+                    } font-mono min-w-[20px] text-center`}
+                  >
+                    {getBeatLabel(index)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
-          // Single row layout for quarter and eighth note patterns
+          // Quarter notes: single row on all screens
           <div className="flex items-center justify-center gap-3 flex-wrap">
             {pattern.map((strum, index) => (
               <div key={index} className="flex flex-col items-center gap-2">
